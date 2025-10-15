@@ -1,0 +1,75 @@
+﻿<Window x:Class="TheApothecary.Views.CartWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Корзина - The Apothecary" Height="500" Width="900"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Список товаров -->
+        <DataGrid x:Name="CartDataGrid" AutoGenerateColumns="False"
+                 Margin="20" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Название" Binding="{Binding Medicine.Name}" Width="*"/>
+                <DataGridTextColumn Header="Цена" Binding="{Binding Medicine.Price, StringFormat={}{0}₽}" Width="80"/>
+                <DataGridTextColumn Header="Количество" Binding="{Binding Quantity}" Width="80"/>
+                <DataGridTextColumn Header="Сумма" Binding="{Binding TotalPrice}" Width="80"/>
+                <DataGridTextColumn Header="Рецепт" Width="60">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="Medicine.RequiresPrescription"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Статус рецепта" Width="100">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="IsPrescriptionVerified"/>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+                <DataGridTemplateColumn Header="Действия" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="❌" Click="RemoveItem_Click" 
+                                        Margin="2" Padding="5" FontSize="10"
+                                        ToolTip="Удалить из корзины"/>
+                                <Button Content="📋 Рецепт" Click="VerifyPrescription_Click" 
+                                        Margin="2" Padding="5" FontSize="10"
+                                        ToolTip="Проверить рецепт"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Панель итогов и действий -->
+        <Border Grid.Row="1" Background="#F5F5F5" Padding="20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock x:Name="TotalText" FontSize="16" FontWeight="Bold" Text="Итого: 0₽ (товаров: 0)"/>
+                    <TextBlock x:Name="PrescriptionWarningText" Foreground="Red" 
+                              Text="⚠ Для некоторых товаров требуется проверка рецепта"
+                              Visibility="Collapsed"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Оформить заказ" Click="CheckoutButton_Click" 
+                            Background="#3498DB" Foreground="White" Padding="15,8"
+                            BorderThickness="0" FontSize="14" FontWeight="SemiBold"
+                            Margin="0,0,10,0"/>
+                    <Button Content="Закрыть" Click="CloseButton_Click" 
+                            Background="#95A5A6" Foreground="White" Padding="15,8"
+                            BorderThickness="0" FontSize="14"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
