@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
-
+//razobrat`
 namespace TheApothecary.Converters
 {
     public class BoolToYesNoConverter : IValueConverter

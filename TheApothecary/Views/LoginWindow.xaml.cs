@@ -21,7 +21,7 @@ namespace TheApothecary.Views
                 return;
             }
 
-          
+          //dodelat
             if (EmailTextBox.Text == "admin@apothecary.com" && PasswordBox.Password == "admin123")
             {
                 LoggedInUser = new User
