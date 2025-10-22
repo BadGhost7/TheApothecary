@@ -29,8 +29,6 @@ namespace TheApothecary.Views
                               MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-
-            
             var newUser = new User
             {
                 Username = $"{FirstNameTextBox.Text} {LastNameTextBox.Text}",

@@ -10,7 +10,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Список товаров -->
         <DataGrid x:Name="CartDataGrid" AutoGenerateColumns="False"
                  Margin="20" IsReadOnly="True">
             <DataGrid.Columns>
