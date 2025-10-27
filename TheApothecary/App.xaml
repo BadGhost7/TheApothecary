@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Стиль для кнопок в шапке -->
+      
         <Style x:Key="HeaderButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
@@ -22,7 +22,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Стиль для основных кнопок -->
+       
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="#3498DB"/>
             <Setter Property="Foreground" Value="White"/>
@@ -41,7 +41,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Стиль для второстепенных кнопок -->
         <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="#95A5A6"/>
             <Setter Property="Foreground" Value="White"/>
@@ -56,7 +55,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Стиль для TextBox -->
         <Style x:Key="ModernTextBox" TargetType="TextBox">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="10"/>
@@ -74,7 +72,15 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Стиль для PasswordBox -->
+        <Style x:Key="AddToCartButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+        </Style>
+
+
         <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="10"/>
