@@ -26,18 +26,27 @@
 
                 <TextBox x:Name="FirstNameTextBox" 
                         Tag="Имя"
-                        Style="{StaticResource ModernTextBox}"
-                        Margin="0,0,0,15"/>
+                Style="{StaticResource TextBoxWithPlaceholder}"
+                Text="Имя"
+                Margin="0,0,0,20"
+                GotFocus="TextBox_GotFocus"
+                LostFocus="TextBox_LostFocus"/>
 
                 <TextBox x:Name="LastNameTextBox" 
                         Tag="Фамилия"
-                        Style="{StaticResource ModernTextBox}"
-                        Margin="0,0,0,15"/>
+                Style="{StaticResource TextBoxWithPlaceholder}"
+                Text="Фамилия"
+                Margin="0,0,0,20"
+                GotFocus="TextBox_GotFocus"
+                LostFocus="TextBox_LostFocus"/>
 
                 <TextBox x:Name="EmailTextBox" 
-                        Tag="Email"
-                        Style="{StaticResource ModernTextBox}"
-                        Margin="0,0,0,15"/>
+                Tag="Введите ваш email"
+                Style="{StaticResource TextBoxWithPlaceholder}"
+                Text="Введите ваш email"
+                Margin="0,0,0,20"
+                GotFocus="TextBox_GotFocus"
+                LostFocus="TextBox_LostFocus"/>
 
                 <PasswordBox x:Name="PasswordBox" 
                             Tag="Пароль"

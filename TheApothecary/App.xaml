@@ -4,6 +4,7 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
       
+   
         <Style x:Key="HeaderButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
@@ -40,7 +41,10 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-
+        
+        
+        
+        
         <Style x:Key="SecondaryButton" TargetType="Button">
             <Setter Property="Background" Value="#95A5A6"/>
             <Setter Property="Foreground" Value="White"/>
@@ -80,6 +84,22 @@
             <Setter Property="VerticalAlignment" Value="Bottom"/>
         </Style>
 
+
+        <Style x:Key="TextBoxWithPlaceholder" TargetType="TextBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Foreground" Value="#AAAAAA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+      
 
         <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
             <Setter Property="Height" Value="40"/>

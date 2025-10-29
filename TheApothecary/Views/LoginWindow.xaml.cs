@@ -1,5 +1,7 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TheApothecary.Models;
 
 namespace TheApothecary.Views
@@ -52,6 +54,32 @@ namespace TheApothecary.Views
                               MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var passwordBox = (PasswordBox)sender;
+            var watermark = passwordBox.Tag?.ToString();
+
+            if (passwordBox.Password == watermark)
+            {
+                passwordBox.Password = "";
+                passwordBox.Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51));
+            }
+        }
+
+        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var passwordBox = (PasswordBox)sender;
+            var watermark = passwordBox.Tag?.ToString();
+
+            if (string.IsNullOrEmpty(passwordBox.Password))
+            {
+                passwordBox.Password = watermark;
+                passwordBox.Foreground = new SolidColorBrush(Color.FromRgb(170, 170, 170));
+            }
+        }
+
 
         private void RegisterText_MouseDown(object sender, MouseButtonEventArgs e)
         {
