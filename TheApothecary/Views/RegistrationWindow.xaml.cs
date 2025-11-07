@@ -1,6 +1,5 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using TheApothecary.Models;
 
 namespace TheApothecary.Views
 {
@@ -11,38 +10,64 @@ namespace TheApothecary.Views
             InitializeComponent();
         }
 
+        private void TextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && textBox.Text == textBox.Tag?.ToString())
+            {
+                textBox.Text = "";
+                textBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(44, 62, 80));
+            }
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                textBox.Text = textBox.Tag?.ToString();
+                textBox.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(102, 102, 102));
+            }
+        }
+
+        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            PasswordBox passwordBox = sender as PasswordBox;
+            if (passwordBox != null)
+            {
+                // Скрываем placeholder при фокусе
+                if (passwordBox.Name == "PasswordBox")
+                    PasswordPlaceholder.Visibility = Visibility.Collapsed;
+                else if (passwordBox.Name == "ConfirmPasswordBox")
+                    ConfirmPasswordPlaceholder.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            PasswordBox passwordBox = sender as PasswordBox;
+            if (passwordBox != null)
+            {
+                // Показываем placeholder, если поле пустое
+                if (passwordBox.Name == "PasswordBox")
+                {
+                    PasswordPlaceholder.Visibility =
+                        string.IsNullOrEmpty(passwordBox.Password) ?
+                        Visibility.Visible : Visibility.Collapsed;
+                }
+                else if (passwordBox.Name == "ConfirmPasswordBox")
+                {
+                    ConfirmPasswordPlaceholder.Visibility =
+                        string.IsNullOrEmpty(passwordBox.Password) ?
+                        Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+        }
+
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(FirstNameTextBox.Text) ||
-                string.IsNullOrWhiteSpace(LastNameTextBox.Text) ||
-                string.IsNullOrWhiteSpace(EmailTextBox.Text) ||
-                PasswordBox.Password.Length < 6)
-            {
-                MessageBox.Show("Пожалуйста, заполните все поля корректно. Пароль должен быть не менее 6 символов.",
-                              "Ошибка регистрации", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (PasswordBox.Password != ConfirmPasswordBox.Password)
-            {
-                MessageBox.Show("Пароли не совпадают!", "Ошибка регистрации",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            var newUser = new User
-            {
-                Username = $"{FirstNameTextBox.Text} {LastNameTextBox.Text}",
-                Email = EmailTextBox.Text,
-                Password = PasswordBox.Password,
-                Role = ((ComboBoxItem)RoleComboBox.SelectedItem).Content.ToString() == "Покупатель" ?
-                      UserRole.Customer : UserRole.Employee
-            };
-
-            MessageBox.Show($"Регистрация успешна! Добро пожаловать в The Apothecary, {newUser.Username}!",
-                          "Успешная регистрация", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            this.DialogResult = true;
-            this.Close();
+            // Здесь будет логика регистрации
+            MessageBox.Show("Регистрация выполнена!");
         }
     }
 }

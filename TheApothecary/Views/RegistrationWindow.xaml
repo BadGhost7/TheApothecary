@@ -4,6 +4,58 @@
         Title="Регистрация - The Apothecary" Height="649" Width="461"
         WindowStartupLocation="CenterOwner">
 
+    <Window.Resources>
+        <!-- Стиль для TextBox с placeholder -->
+        <Style x:Key="TextBoxWithPlaceholder" TargetType="TextBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#3498DB"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для PasswordBox с placeholder -->
+        <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#3498DB"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для кнопки -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2980B9"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#21618C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
     <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1">
         <Grid Margin="30">
             <Grid.RowDefinitions>
@@ -26,40 +78,63 @@
 
                 <TextBox x:Name="FirstNameTextBox" 
                         Tag="Имя"
-                Style="{StaticResource TextBoxWithPlaceholder}"
-                Text="Имя"
-                Margin="0,0,0,20"
-                GotFocus="TextBox_GotFocus"
-                LostFocus="TextBox_LostFocus"/>
+                        Style="{StaticResource TextBoxWithPlaceholder}"
+                        Text="Имя"
+                        Margin="0,0,0,20"
+                        GotFocus="TextBox_GotFocus"
+                        LostFocus="TextBox_LostFocus"/>
 
                 <TextBox x:Name="LastNameTextBox" 
                         Tag="Фамилия"
-                Style="{StaticResource TextBoxWithPlaceholder}"
-                Text="Фамилия"
-                Margin="0,0,0,20"
-                GotFocus="TextBox_GotFocus"
-                LostFocus="TextBox_LostFocus"/>
+                        Style="{StaticResource TextBoxWithPlaceholder}"
+                        Text="Фамилия"
+                        Margin="0,0,0,20"
+                        GotFocus="TextBox_GotFocus"
+                        LostFocus="TextBox_LostFocus"/>
 
                 <TextBox x:Name="EmailTextBox" 
-                Tag="Введите ваш email"
-                Style="{StaticResource TextBoxWithPlaceholder}"
-                Text="Введите ваш email"
-                Margin="0,0,0,20"
-                GotFocus="TextBox_GotFocus"
-                LostFocus="TextBox_LostFocus"/>
+                        Tag="Введите ваш email"
+                        Style="{StaticResource TextBoxWithPlaceholder}"
+                        Text="Введите ваш email"
+                        Margin="0,0,0,20"
+                        GotFocus="TextBox_GotFocus"
+                        LostFocus="TextBox_LostFocus"/>
 
-                <PasswordBox x:Name="PasswordBox" 
-                            Tag="Пароль"
-                            Style="{StaticResource ModernPasswordBox}"
-                            Margin="0,0,0,15"/>
+                <!-- Контейнер для PasswordBox с placeholder -->
+                <Grid Margin="0,0,0,15" Height="40">
+                    <PasswordBox x:Name="PasswordBox" 
+                                Tag="Пароль"
+                                Style="{StaticResource ModernPasswordBox}"
+                                PasswordChar="•"
+                                GotFocus="PasswordBox_GotFocus"
+                                LostFocus="PasswordBox_LostFocus"/>
+                    <TextBlock x:Name="PasswordPlaceholder" 
+                              Text="Пароль" 
+                              Foreground="#666666"
+                              Padding="10,0,0,0"
+                              VerticalAlignment="Center"
+                              IsHitTestVisible="False"/>
+                </Grid>
 
-                <PasswordBox x:Name="ConfirmPasswordBox" 
-                            Tag="Подтвердите пароль"
-                            Style="{StaticResource ModernPasswordBox}"
-                            Margin="0,0,0,20"/>
+                <!-- Контейнер для ConfirmPasswordBox с placeholder -->
+                <Grid Margin="0,0,0,20" Height="40">
+                    <PasswordBox x:Name="ConfirmPasswordBox" 
+                                Tag="Подтвердите пароль"
+                                Style="{StaticResource ModernPasswordBox}"
+                                PasswordChar="•"
+                                GotFocus="PasswordBox_GotFocus"
+                                LostFocus="PasswordBox_LostFocus"/>
+                    <TextBlock x:Name="ConfirmPasswordPlaceholder" 
+                              Text="Подтвердите пароль" 
+                              Foreground="#666666"
+                              Padding="10,0,0,0"
+                              VerticalAlignment="Center"
+                              IsHitTestVisible="False"/>
+                </Grid>
 
                 <ComboBox x:Name="RoleComboBox" 
-                         Height="40" Margin="0,0,0,20">
+                         Height="40" Margin="0,0,0,20"
+                         FontSize="14" Padding="10">
                     <ComboBoxItem Content="Покупатель" IsSelected="True"/>
                     <ComboBoxItem Content="Сотрудник"/>
                 </ComboBox>
@@ -71,6 +146,7 @@
             </StackPanel>
 
             <TextBlock Grid.Row="2" 
+                      Text="© 2024 The Apothecary. Все права защищены."
                       FontSize="10" Foreground="#95A5A6"
                       HorizontalAlignment="Center"/>
         </Grid>
