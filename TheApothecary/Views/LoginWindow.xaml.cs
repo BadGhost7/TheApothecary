@@ -8,84 +8,106 @@ namespace TheApothecary.Views
 {
     public partial class LoginWindow : Window
     {
-        public User LoggedInUser { get; private set; }
-
         public LoginWindow()
         {
-            InitializeComponent(); 
+            InitializeComponent();
         }
+
+        private void EmailTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (EmailTextBox.Text == "Email")
+            {
+                EmailTextBox.Text = "";
+                EmailTextBox.Foreground = Brushes.Black;
+            }
+        }
+
+        private void EmailTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(EmailTextBox.Text))
+            {
+                EmailTextBox.Text = "Email";
+                EmailTextBox.Foreground = Brushes.Gray;
+            }
+        }
+
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(EmailTextBox.Text) || string.IsNullOrWhiteSpace(PasswordBox.Password))
+            string email = EmailTextBox.Text;
+            string password = PasswordBox.Password;
+
+            if (email == "Email" || string.IsNullOrWhiteSpace(email))
             {
-                MessageBox.Show("Пожалуйста, заполните все поля", "Ошибка входа",
-                              MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Введите email");
                 return;
             }
 
-          //dodelat
-            if (EmailTextBox.Text == "admin@apothecary.com" && PasswordBox.Password == "admin123")
+            if (string.IsNullOrEmpty(password))
             {
-                LoggedInUser = new User
+                MessageBox.Show("Введите пароль");
+                return;
+            }
+
+            // Простая проверка без UserService
+            User authenticatedUser = null;
+
+            if (email == "admin@apothecary.com" && password == "admin123")
+            {
+                authenticatedUser = new User
                 {
                     Id = 1,
                     Username = "Администратор",
-                    Email = EmailTextBox.Text,
+                    Email = email,
                     Role = UserRole.Admin
                 };
-                this.DialogResult = true;
-                this.Close();
             }
-            else if (EmailTextBox.Text == "employee@apothecary.com" && PasswordBox.Password == "employee123")
+            else if (email == "employee@apothecary.com" && password == "employee123")
             {
-                LoggedInUser = new User
+                authenticatedUser = new User
                 {
                     Id = 2,
                     Username = "Сотрудник",
-                    Email = EmailTextBox.Text,
+                    Email = email,
                     Role = UserRole.Employee
                 };
-                this.DialogResult = true;
-                this.Close();
+            }
+
+            if (authenticatedUser != null)
+            {
+                OpenMainWindow(authenticatedUser);
             }
             else
             {
-                MessageBox.Show("Неверный email или пароль", "Ошибка входа",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Неверный email или пароль");
             }
         }
 
+        private void OpenMainWindow(User user)
+        {
+            MainWindow mainWindow = new MainWindow();
 
+          
+
+            mainWindow.Show();
+            this.Close();
+        }
         private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            var passwordBox = (PasswordBox)sender;
-            var watermark = passwordBox.Tag?.ToString();
-
-            if (passwordBox.Password == watermark)
-            {
-                passwordBox.Password = "";
-                passwordBox.Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51));
-            }
+            PasswordPlaceholder.Visibility = Visibility.Collapsed;
         }
 
         private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            var passwordBox = (PasswordBox)sender;
-            var watermark = passwordBox.Tag?.ToString();
-
-            if (string.IsNullOrEmpty(passwordBox.Password))
+            if (string.IsNullOrEmpty(PasswordBox.Password))
             {
-                passwordBox.Password = watermark;
-                passwordBox.Foreground = new SolidColorBrush(Color.FromRgb(170, 170, 170));
+                PasswordPlaceholder.Visibility = Visibility.Visible;
             }
         }
-
-
         private void RegisterText_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            var registrationWindow = new RegistrationWindow();
-            registrationWindow.Owner = this;
-            registrationWindow.ShowDialog();
+            RegistrationWindow registrationWindow = new RegistrationWindow();
+            registrationWindow.Show();
+            this.Close();
         }
     }
 }

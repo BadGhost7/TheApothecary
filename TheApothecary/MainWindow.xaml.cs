@@ -38,7 +38,7 @@ namespace TheApothecary
                     Price = "650₽", StockQuantity = 15, RequiresPrescription = true }
             };
 
-            // Создаем коллекцию для отображения с преобразованными данными
+           
             var displayMedicines = medicines.Select(med => new
             {
                 Id = med.Id,
@@ -100,7 +100,7 @@ namespace TheApothecary
             loginWindow.Owner = this;
             if (loginWindow.ShowDialog() == true)
             {
-                currentUser = loginWindow.LoggedInUser;
+               
                 UpdateUserInterface();
             }
         }

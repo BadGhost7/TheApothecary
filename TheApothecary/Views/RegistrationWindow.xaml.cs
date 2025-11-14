@@ -35,7 +35,6 @@ namespace TheApothecary.Views
             PasswordBox passwordBox = sender as PasswordBox;
             if (passwordBox != null)
             {
-                // Скрываем placeholder при фокусе
                 if (passwordBox.Name == "PasswordBox")
                     PasswordPlaceholder.Visibility = Visibility.Collapsed;
                 else if (passwordBox.Name == "ConfirmPasswordBox")
@@ -48,7 +47,7 @@ namespace TheApothecary.Views
             PasswordBox passwordBox = sender as PasswordBox;
             if (passwordBox != null)
             {
-                // Показываем placeholder, если поле пустое
+              
                 if (passwordBox.Name == "PasswordBox")
                 {
                     PasswordPlaceholder.Visibility =
@@ -66,7 +65,7 @@ namespace TheApothecary.Views
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            // Здесь будет логика регистрации
+           
             MessageBox.Show("Регистрация выполнена!");
         }
     }

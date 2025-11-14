@@ -13,14 +13,12 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Заголовок -->
             <TextBlock Grid.Row="0" Text="The Apothecary" 
                       FontSize="24" FontWeight="Bold" 
                       HorizontalAlignment="Center" 
                       Margin="0,0,0,20"
                       Foreground="#2C3E50"/>
 
-            <!-- Форма входа -->
             <StackPanel Grid.Row="1" VerticalAlignment="Center">
                 <TextBlock Text="Вход в систему" 
                           FontSize="18" FontWeight="SemiBold"
@@ -28,20 +26,39 @@
                           HorizontalAlignment="Center"/>
 
                 <TextBox x:Name="EmailTextBox" 
-                        Tag="Email"
-                        Style="{StaticResource ModernTextBox}"
-                        Margin="0,0,0,20"/>
+                        Height="40" 
+                        Padding="10"
+                        Text="Email"
+                        Foreground="Gray"
+                        Margin="0,0,0,20"
+                        GotFocus="EmailTextBox_GotFocus"
+                        LostFocus="EmailTextBox_LostFocus"/>
 
-                <PasswordBox x:Name="PasswordBox" 
-                            Tag="Пароль"
-                            Style="{StaticResource ModernPasswordBox}"
-                            Margin="0,0,0,25"/>
+                
+                <Grid Margin="0,0,0,25" Height="40">
+                    <PasswordBox x:Name="PasswordBox" 
+                                Height="40"
+                                Padding="10"
+                                PasswordChar="•"
+                                GotFocus="PasswordBox_GotFocus"
+                                LostFocus="PasswordBox_LostFocus"/>
+                    <TextBlock x:Name="PasswordPlaceholder" 
+                              Text="Пароль" 
+                              Foreground="Gray"
+                              Padding="10,0,0,0"
+                              VerticalAlignment="Center"
+                              IsHitTestVisible="False"/>
+                </Grid>
 
                 <Button x:Name="LoginButton" 
                        Content="Войти" 
                        Click="LoginButton_Click"
-                       Style="{StaticResource PrimaryButton}"
                        Height="45"
+                       Background="#3498DB"
+                       Foreground="White"
+                       BorderThickness="0"
+                       FontSize="14"
+                       FontWeight="SemiBold"
                        Margin="0,0,0,15"/>
 
                 <TextBlock Text="Нет аккаунта? Зарегистрироваться" 
@@ -52,8 +69,10 @@
                           MouseDown="RegisterText_MouseDown"/>
             </StackPanel>
 
-            <!-- Футер -->
-
+            <TextBlock Grid.Row="2" 
+                      Text="© 2024 The Apothecary"
+                      FontSize="10" Foreground="#95A5A6"
+                      HorizontalAlignment="Center"/>
         </Grid>
     </Border>
 </Window>
