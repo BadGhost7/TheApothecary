@@ -65,8 +65,9 @@ namespace TheApothecary.Views
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-           
             MessageBox.Show("Регистрация выполнена!");
+            
+            this.Close(); 
         }
     }
 }
