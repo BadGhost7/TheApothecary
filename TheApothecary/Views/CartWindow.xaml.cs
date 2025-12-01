@@ -23,23 +23,23 @@ namespace TheApothecary.Views
 
         private void LoadCartData()
         {
-            CartDataGrid.ItemsSource = null;
-
-            // Создаем коллекцию для отображения
+            // Создаем коллекцию для отображения с цветами
             var displayItems = cartItems.Select(item => new
             {
                 Medicine = item.Medicine,
                 Quantity = item.Quantity,
-                Price = item.Medicine.Price, // Уже строка с ₽
+                Price = item.Medicine.Price,
                 TotalPrice = CalculateItemTotal(item.Medicine.Price, item.Quantity),
                 RequiresPrescription = item.Medicine.RequiresPrescription ? "Да" : "Нет",
+                RequiresPrescriptionTextColor = item.Medicine.RequiresPrescription ? "#E74C3C" : "#27AE60",
                 IsPrescriptionVerified = item.IsPrescriptionVerified ? "Да" : "Нет",
+                IsPrescriptionVerifiedTextColor = item.IsPrescriptionVerified ? "#27AE60" : "#E74C3C",
                 OriginalItem = item
             }).ToList();
 
-            CartDataGrid.ItemsSource = displayItems;
+            // Используем CartItemsControl вместо CartDataGrid
+            CartItemsControl.ItemsSource = displayItems;
         }
-
         // Метод для расчета общей стоимости товара
         private string CalculateItemTotal(string price, int quantity)
         {
