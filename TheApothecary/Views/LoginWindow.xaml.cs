@@ -1,16 +1,45 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using TheApothecary.Models;
 
 namespace TheApothecary.Views
 {
     public partial class LoginWindow : Window
     {
+        public string Username { get; private set; }
+        public string Password { get; private set; }
+        public bool DialogResult { get; private set; }
+
         public LoginWindow()
         {
             InitializeComponent();
+
+            // Инициализация плейсхолдеров
+            EmailTextBox.GotFocus += EmailTextBox_GotFocus;
+            EmailTextBox.LostFocus += EmailTextBox_LostFocus;
+            PasswordBox.GotFocus += PasswordBox_GotFocus;
+            PasswordBox.LostFocus += PasswordBox_LostFocus;
+        }
+
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            // EmailTextBox используется как поле для username
+            Username = EmailTextBox.Text;
+            Password = PasswordBox.Password;
+
+            if (string.IsNullOrWhiteSpace(Username))
+            {
+                MessageBox.Show("Введите email/логин", "Ошибка");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(Password))
+            {
+                MessageBox.Show("Введите пароль", "Ошибка");
+                return;
+            }
+
+            DialogResult = true;
+            Close();
         }
 
         private void EmailTextBox_GotFocus(object sender, RoutedEventArgs e)
@@ -18,7 +47,7 @@ namespace TheApothecary.Views
             if (EmailTextBox.Text == "Email")
             {
                 EmailTextBox.Text = "";
-                EmailTextBox.Foreground = Brushes.Black;
+                EmailTextBox.Foreground = System.Windows.Media.Brushes.Black;
             }
         }
 
@@ -27,70 +56,10 @@ namespace TheApothecary.Views
             if (string.IsNullOrWhiteSpace(EmailTextBox.Text))
             {
                 EmailTextBox.Text = "Email";
-                EmailTextBox.Foreground = Brushes.Gray;
+                EmailTextBox.Foreground = System.Windows.Media.Brushes.Gray;
             }
         }
 
-        private void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            string email = EmailTextBox.Text;
-            string password = PasswordBox.Password;
-
-            if (email == "Email" || string.IsNullOrWhiteSpace(email))
-            {
-                MessageBox.Show("Введите email");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(password))
-            {
-                MessageBox.Show("Введите пароль");
-                return;
-            }
-
-            // Простая проверка без UserService
-            User authenticatedUser = null;
-
-            if (email == "admin@apothecary.com" && password == "admin123")
-            {
-                authenticatedUser = new User
-                {
-                    Id = 1,
-                    Username = "Администратор",
-                    Email = email,
-                    Role = UserRole.Admin
-                };
-            }
-            else if (email == "employee@apothecary.com" && password == "employee123")
-            {
-                authenticatedUser = new User
-                {
-                    Id = 2,
-                    Username = "Сотрудник",
-                    Email = email,
-                    Role = UserRole.Employee
-                };
-            }
-
-            if (authenticatedUser != null)
-            {
-                OpenMainWindow(authenticatedUser);
-            }
-            else
-            {
-                MessageBox.Show("Неверный email или пароль");
-            }
-        }
-
-        private void OpenMainWindow(User user)
-        {
-            MainWindow mainWindow = new MainWindow();
-
-          
-
-            mainWindow.Show();
-            this.Close();
-        }
         private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
         {
             PasswordPlaceholder.Visibility = Visibility.Collapsed;
@@ -103,11 +72,11 @@ namespace TheApothecary.Views
                 PasswordPlaceholder.Visibility = Visibility.Visible;
             }
         }
-        private void RegisterText_MouseDown(object sender, MouseButtonEventArgs e)
+
+        private void RegisterText_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            RegistrationWindow registrationWindow = new RegistrationWindow();
-            registrationWindow.Show();
-            this.Close();
+            DialogResult = false;
+            Close();
         }
     }
 }
