@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace TheApothecary.Data
 {
@@ -29,13 +28,39 @@ namespace TheApothecary.Data
             }
         }
 
+
+
         // Публичный метод для сброса инстанса
         public static void ResetInstance()
         {
             if (_instance != null)
             {
-                _instance.Dispose();
-                _instance = null;
+                try
+                {
+                    // Закрываем все соединения
+                    _instance.Database.CloseConnection();
+
+                    // Отсоединяем все отслеживаемые сущности
+                    var changedEntries = _instance.ChangeTracker.Entries()
+                        .Where(e => e.State != EntityState.Detached)
+                        .ToList();
+
+                    foreach (var entry in changedEntries)
+                    {
+                        entry.State = EntityState.Detached;
+                    }
+
+                    // Освобождаем ресурсы
+                    _instance.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка при закрытии контекста: {ex.Message}");
+                }
+                finally
+                {
+                    _instance = null;
+                }
             }
         }
 
@@ -44,7 +69,6 @@ namespace TheApothecary.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pharmacy.db");
-            Console.WriteLine($"База данных: {dbPath}");
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
 
@@ -52,7 +76,6 @@ namespace TheApothecary.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Настраиваем модель Medicine
             modelBuilder.Entity<Medicine>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -60,9 +83,9 @@ namespace TheApothecary.Data
                 entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.Category).HasMaxLength(50);
+                entity.Property(e => e.ImagePath).HasMaxLength(500);
             });
 
-            // Настраиваем модель User
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -70,9 +93,9 @@ namespace TheApothecary.Data
                 entity.Property(e => e.Email).HasMaxLength(100);
                 entity.Property(e => e.Password).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => e.Username).IsUnique();
+                entity.Property(e => e.Role).IsRequired();
             });
 
-            // Настраиваем модель CartItem
             modelBuilder.Entity<CartItem>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -84,36 +107,60 @@ namespace TheApothecary.Data
         {
             try
             {
-                // 1. Создаем базу если ее нет
+                // Создаем базу если ее нет
                 Database.EnsureCreated();
 
-                // 2. Добавляем админа если нет
-                if (!Users.Any(u => u.Username == "admin"))
+                // Добавляем тестовых пользователей если их нет
+                if (!Users.Any())
                 {
-                    Users.Add(new User
-                    {
-                        Username = "admin",
-                        Email = "admin@pharmacy.com",
-                        Password = "admin123",
-                        Role = UserRole.Admin
-                    });
+                    Users.AddRange(GetDefaultUsers());
                     SaveChanges();
                 }
 
-                // 3. Добавляем лекарства если нет
+                // Добавляем лекарства если нет
                 if (!Medicines.Any())
                 {
                     Medicines.AddRange(GetDefaultMedicines());
                     SaveChanges();
                 }
-
-                Console.WriteLine($"База инициализирована: {Database.GetDbConnection().DataSource}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка инициализации базы: {ex.Message}");
                 throw;
             }
+        }
+
+        // ТЕСТОВЫЕ ПОЛЬЗОВАТЕЛИ
+        private User[] GetDefaultUsers()
+        {
+            return new User[]
+            {
+                new User
+                {
+                    Id = 1,
+                    Username = "admin",
+                    Email = "admin@pharmacy.com",
+                    Password = "admin123",
+                    Role = UserRole.Admin
+                },
+                new User
+                {
+                    Id = 2,
+                    Username = "employee",
+                    Email = "employee@pharmacy.com",
+                    Password = "employee123",
+                    Role = UserRole.Employee
+                },
+                new User
+                {
+                    Id = 3,
+                    Username = "customer",
+                    Email = "customer@pharmacy.com",
+                    Password = "customer123",
+                    Role = UserRole.Customer
+                }
+            };
         }
 
         // ДЕФОЛТНЫЕ ЛЕКАРСТВА
@@ -129,7 +176,8 @@ namespace TheApothecary.Data
                     Price = 150.00m,
                     StockQuantity = 50,
                     RequiresPrescription = false,
-                    Category = "Обезболивающие"
+                    Category = "Обезболивающие",
+                    ImagePath = "/Images/default_medicine.jpg"
                 },
                 new Medicine
                 {
@@ -139,7 +187,8 @@ namespace TheApothecary.Data
                     Price = 450.00m,
                     StockQuantity = 20,
                     RequiresPrescription = true,
-                    Category = "Антибиотики"
+                    Category = "Антибиотики",
+                    ImagePath = "/Images/default_medicine.jpg"
                 },
                 new Medicine
                 {
@@ -149,46 +198,25 @@ namespace TheApothecary.Data
                     Price = 200.00m,
                     StockQuantity = 35,
                     RequiresPrescription = false,
-                    Category = "Обезболивающие"
-                },
-                new Medicine
-                {
-                    Id = 4,
-                    Name = "Лоратадин",
-                    Description = "Противоаллергическое средство",
-                    Price = 180.00m,
-                    StockQuantity = 40,
-                    RequiresPrescription = false,
-                    Category = "Антигистаминные"
-                },
-                new Medicine
-                {
-                    Id = 5,
-                    Name = "Трамадол",
-                    Description = "Сильное обезболивающее",
-                    Price = 650.00m,
-                    StockQuantity = 15,
-                    RequiresPrescription = true,
-                    Category = "Обезболивающие"
+                    Category = "Обезболивающие",
+                    ImagePath = "/Images/default_medicine.jpg"
                 }
             };
         }
 
-        // ПРОСТОЙ МЕТОД ДЛЯ ПОЛУЧЕНИЯ ВСЕХ ЛЕКАРСТВ
+        // ОСТАЛЬНЫЕ МЕТОДЫ
         public List<Medicine> GetAllMedicines()
         {
             try
             {
                 return Medicines.ToList();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Ошибка получения лекарств: {ex.Message}");
                 return new List<Medicine>();
             }
         }
 
-        // МЕТОД ДЛЯ ПОИСКА ЛЕКАРСТВ
         public List<Medicine> SearchMedicines(string query)
         {
             return Medicines
@@ -198,7 +226,6 @@ namespace TheApothecary.Data
                 .ToList();
         }
 
-        // МЕТОД ДЛЯ ДОБАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯ
         public bool AddUser(User user)
         {
             try
@@ -219,12 +246,31 @@ namespace TheApothecary.Data
         // МЕТОД ДЛЯ ПРОВЕРКИ ЛОГИНА
         public User Login(string username, string password)
         {
-            return Users.FirstOrDefault(u =>
-                u.Username == username &&
-                u.Password == password);
+            try
+            {
+                // Ищем по username (логину)
+                var user = Users.FirstOrDefault(u =>
+                    u.Username.ToLower() == username.ToLower() &&
+                    u.Password == password);
+
+                // Если не нашли по username, пробуем найти по email
+                if (user == null)
+                {
+                    user = Users.FirstOrDefault(u =>
+                        u.Email.ToLower() == username.ToLower() &&
+                        u.Password == password);
+                }
+
+                Console.WriteLine($"Login attempt: {username}, found: {user != null}");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Login error: {ex.Message}");
+                return null;
+            }
         }
 
-        // Метод для проверки существования базы данных
         public bool DatabaseExists()
         {
             string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pharmacy.db");

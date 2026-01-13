@@ -6,16 +6,19 @@ namespace TheApothecary.Views
 {
     public partial class RegistrationWindow : Window
     {
-        public string Username { get; private set; }
+        
+        public string FirstName { get; private set; }
+        public string LastName { get; private set; }
         public string Email { get; private set; }
         public string Password { get; private set; }
         public UserRole Role { get; private set; }
+        public string Username { get; private set; }
 
         public RegistrationWindow()
         {
             InitializeComponent();
 
-            // Подписываемся на события
+            
             EmailTextBox.GotFocus += TextBox_GotFocus;
             EmailTextBox.LostFocus += TextBox_LostFocus;
             FirstNameTextBox.GotFocus += TextBox_GotFocus;
@@ -30,42 +33,56 @@ namespace TheApothecary.Views
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            // Проверка данных
             if (string.IsNullOrWhiteSpace(EmailTextBox.Text) || EmailTextBox.Text == "Введите ваш email")
             {
-                MessageBox.Show("Введите email", "Ошибка");
+                MessageBox.Show("Введите email", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(FirstNameTextBox.Text) || FirstNameTextBox.Text == "Имя")
             {
-                MessageBox.Show("Введите имя", "Ошибка");
+                MessageBox.Show("Введите имя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(LastNameTextBox.Text) || LastNameTextBox.Text == "Фамилия")
+            {
+                MessageBox.Show("Введите фамилию", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(PasswordBox.Password))
             {
-                MessageBox.Show("Введите пароль", "Ошибка");
+                MessageBox.Show("Введите пароль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (PasswordBox.Password.Length < 6)
+            {
+                MessageBox.Show("Пароль должен содержать минимум 6 символов", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (PasswordBox.Password != ConfirmPasswordBox.Password)
             {
-                MessageBox.Show("Пароли не совпадают", "Ошибка");
+                MessageBox.Show("Пароли не совпадают", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            // Устанавливаем значения
-            Username = FirstNameTextBox.Text; // Имя как username
-            Email = EmailTextBox.Text;
+            // Устанавливаем значения в публичные свойства
+            FirstName = FirstNameTextBox.Text.Trim();
+            LastName = LastNameTextBox.Text.Trim();
+            Email = EmailTextBox.Text.Trim();
             Password = PasswordBox.Password;
+            Username = $"{FirstName}_{LastName}".ToLower(); 
 
-            // Определяем роль
-            if (RoleComboBox.SelectedIndex == 0) // Покупатель
+         
+            if (RoleComboBox.SelectedIndex == 0) 
                 Role = UserRole.Customer;
-            else // Сотрудник
+            else 
                 Role = UserRole.Employee;
 
+      
             DialogResult = true;
             Close();
         }
@@ -106,6 +123,13 @@ namespace TheApothecary.Views
                 PasswordPlaceholder.Visibility = Visibility.Visible;
             else if (passwordBox == ConfirmPasswordBox && string.IsNullOrEmpty(passwordBox.Password))
                 ConfirmPasswordPlaceholder.Visibility = Visibility.Visible;
+        }
+
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace TheApothecary.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        // Внешний ключ на Medicine
+
         public int MedicineId { get; set; }
 
         [ForeignKey("MedicineId")]
@@ -17,7 +17,7 @@ namespace TheApothecary.Models
 
         public int Quantity { get; set; }
 
-        // Внешний ключ на Prescription (может быть null)
+        
         public int? PrescriptionId { get; set; }
 
         [ForeignKey("PrescriptionId")]

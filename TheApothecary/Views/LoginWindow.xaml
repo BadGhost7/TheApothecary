@@ -25,16 +25,16 @@
                           Margin="0,0,0,25"
                           HorizontalAlignment="Center"/>
 
-                <TextBox x:Name="EmailTextBox" 
+               
+                <TextBox x:Name="LoginTextBox" 
                         Height="40" 
                         Padding="10"
-                        Text="Email"
+                        Text="Логин"
                         Foreground="Gray"
                         Margin="0,0,0,20"
-                        GotFocus="EmailTextBox_GotFocus"
-                        LostFocus="EmailTextBox_LostFocus"/>
+                        GotFocus="LoginTextBox_GotFocus"
+                        LostFocus="LoginTextBox_LostFocus"/>
 
-                
                 <Grid Margin="0,0,0,25" Height="40">
                     <PasswordBox x:Name="PasswordBox" 
                                 Height="40"

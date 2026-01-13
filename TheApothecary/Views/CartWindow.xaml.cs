@@ -23,14 +23,14 @@ namespace TheApothecary.Views
 
         private void LoadCartData()
         {
-            // Создаем коллекцию для отображения с цветами
+          
             var displayItems = cartItems.Select(item => new
             {
                 Medicine = item.Medicine,
                 Quantity = item.Quantity,
                 Price = item.Medicine.Price,
-                // ИСПРАВЛЕНО: убрана строка price
-                TotalPrice = item.Medicine.Price * item.Quantity, // Простое умножение
+              
+                TotalPrice = item.Medicine.Price * item.Quantity, 
                 RequiresPrescription = item.Medicine.RequiresPrescription ? "Да" : "Нет",
                 RequiresPrescriptionTextColor = item.Medicine.RequiresPrescription ? "#E74C3C" : "#27AE60",
                 IsPrescriptionVerified = item.IsPrescriptionVerified ? "Да" : "Нет",
@@ -38,21 +38,11 @@ namespace TheApothecary.Views
                 OriginalItem = item
             }).ToList();
 
-            // Используем CartItemsControl вместо CartDataGrid
+          
             CartItemsControl.ItemsSource = displayItems;
         }
 
-        // УДАЛИ ЭТОТ МЕТОД - он конфликтует с другим
-        // private string CalculateItemTotal(string price, int quantity)
-        // {
-        //     if (decimal.TryParse(price.Replace("₽", "").Trim(), out decimal numericPrice))
-        //     {
-        //         return $"{numericPrice * quantity}₽";
-        //     }
-        //     return "0₽";
-        // }
-
-        // Метод для расчета общей суммы корзины
+       
         private decimal CalculateTotal()
         {
             decimal total = 0;
@@ -68,16 +58,16 @@ namespace TheApothecary.Views
             return total;
         }
 
-        // Метод для расчета суммы одного товара
+        
         private decimal CalculateItemTotal(decimal price, int quantity)
         {
             return price * quantity;
         }
 
-        // ДОБАВЛЕН НОВЫЙ МЕТОД который ты используешь
+        
         private decimal CalculateTotalAmount()
         {
-            return CalculateTotal(); // Просто вызывает существующий метод
+            return CalculateTotal(); 
         }
 
         private void CheckPrescriptionRequirements()
@@ -97,9 +87,9 @@ namespace TheApothecary.Views
                 return;
             }
 
-            decimal total = CalculateTotalAmount(); // Теперь метод существует
+            decimal total = CalculateTotalAmount(); 
             int totalItems = cartItems.Sum(item => item.Quantity);
-            TotalText.Text = $"Итого: {total:F2}₽ (товаров: {totalItems})"; // F2 для двух знаков после запятой
+            TotalText.Text = $"Итого: {total:F2}₽ (товаров: {totalItems})";
         }
 
         private void RemoveItem_Click(object sender, RoutedEventArgs e)
@@ -154,7 +144,7 @@ namespace TheApothecary.Views
                 return;
             }
 
-            // Проверяем все ли рецептурные товары проверены
+        
             bool allPrescriptionsVerified = true;
             List<string> unverifiedMeds = new List<string>();
 
@@ -175,7 +165,7 @@ namespace TheApothecary.Views
                 return;
             }
 
-            // Проверяем наличие товаров на складе
+        
             bool allInStock = true;
             List<string> outOfStockMeds = new List<string>();
 
@@ -196,13 +186,13 @@ namespace TheApothecary.Views
                 return;
             }
 
-            // Оформление заказа
-            decimal totalAmount = CalculateTotalAmount(); // Теперь метод существует
+         
+            decimal totalAmount = CalculateTotalAmount(); 
 
             MessageBox.Show($"Заказ успешно оформлен!\nОбщая сумма: {totalAmount:F2}₽\nСпасибо за покупку!", "Успех",
                           MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // Очищаем корзину после успешного заказа
+           
             cartItems.Clear();
             this.DialogResult = true;
             this.Close();

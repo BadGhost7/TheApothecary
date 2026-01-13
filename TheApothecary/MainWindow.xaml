@@ -4,15 +4,19 @@
         Title="The Apothecary - Аптека" Height="700" Width="1200"
         WindowStartupLocation="CenterScreen">
 
+    <Window.Resources>
+       
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
     <Grid>
-        
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-   
+    
         <Border Grid.Row="0" Background="#2C3E50" Padding="15">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -27,23 +31,46 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                     <TextBlock x:Name="UserInfoText" Text="Гость" 
                               Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <!-- Добавь эти кнопки рядом с другими -->
-                    <Button Content="✅ Проверить базу" 
-        Click="CheckDbButton_Click" 
-        Margin="5" Width="120"/>
 
-                    <Button Content="🔄 Сбросить базу" 
-        Click="ResetDbButton_Click" 
-        Margin="5" Width="120"/>
+             
+                    <StackPanel x:Name="ManageMedicinesPanel" Orientation="Horizontal" 
+                                Visibility="Collapsed" Margin="5,0,10,0">
+                        <Button x:Name="AddMedicineBtn" Content="➕ Добавить" 
+                                Width="90" Height="30" Click="AddMedicineBtn_Click"
+                                Background="#27AE60" Foreground="White" BorderThickness="0"
+                                Margin="0,0,5,0"/>
+                    </StackPanel>
+
+                
+                    <Button Content="✅ Проверить" 
+                            Click="CheckDbButton_Click" 
+                            Width="90" Height="30"
+                            Background="#3498DB" Foreground="White" BorderThickness="0"
+                            Margin="0,0,5,0"
+                            ToolTip="Проверить базу данных"/>
+
+                    <Button Content="🔄 Сбросить" 
+                            Click="ResetDbButton_Click" 
+                            Width="90" Height="30"
+                            Background="#E74C3C" Foreground="White" BorderThickness="0"
+                            Margin="0,0,15,0"
+                            ToolTip="Сбросить базу данных"/>
+
+              
                     <Button x:Name="LoginBtn" Content="Войти" Click="LoginBtn_Click" 
+                            Width="70" Height="30"
                             Background="Transparent" Foreground="White" BorderThickness="0" 
-                            Padding="10,5" Cursor="Hand" FontSize="12"/>
+                            Cursor="Hand" FontSize="12"/>
+
                     <Button x:Name="RegisterBtn" Content="Регистрация" Click="RegisterBtn_Click" 
+                            Width="90" Height="30"
                             Background="Transparent" Foreground="White" BorderThickness="0" 
-                            Padding="10,5" Cursor="Hand" FontSize="12" Margin="10,0,0,0"/>
+                            Cursor="Hand" FontSize="12" Margin="5,0,0,0"/>
+
                     <Button x:Name="CartBtn" Content="🛒 Корзина (0)" Click="CartBtn_Click" 
-                            Background="Transparent" Foreground="White" BorderThickness="0" 
-                            Padding="10,5" Cursor="Hand" FontSize="12" Margin="10,0,0,0"/>
+                            Width="100" Height="30"
+                            Background="#3498DB" Foreground="White" BorderThickness="0" 
+                            Cursor="Hand" FontSize="12" Margin="10,0,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -60,62 +87,116 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border BorderBrush="#DDD" BorderThickness="1" Margin="10" 
-                                Background="White" Width="220" Height="320">
+                                Background="White" Width="280" Height="350">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="80"/>
+                                    <RowDefinition Height="Auto"/>
+                               
                                     <RowDefinition Height="*"/>
-                                    <RowDefinition Height="50"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                               
                                 <Border Grid.Row="0" Background="#F8F9FA" Margin="10,10,10,5">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="💊" FontSize="24" Margin="10,0,10,0"/>
-                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" 
-                                                  TextWrapping="Wrap" FontSize="12" VerticalAlignment="Center"/>
-                                    </StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="5">
+                                            <TextBlock Text="💊" FontSize="24" Margin="0,0,10,0"/>
+                                            <TextBlock Text="{Binding Name}" 
+                                                      FontWeight="Bold" 
+                                                      TextWrapping="Wrap" 
+                                                      FontSize="13" 
+                                                      VerticalAlignment="Center"
+                                                      MaxWidth="140"/>
+                                      
+                                        </StackPanel>
+
+                                      
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" 
+                                                    x:Name="MedicineControlsPanel" 
+                                                    Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Margin="0,0,5,0">
+                                            <Button Content="✏️" 
+                                                    Tag="{Binding Id}"
+                                                    Click="EditMedicineBtn_Click" 
+                                                    Width="25" Height="25"
+                                                    Background="#F39C12" Foreground="White"
+                                                    BorderThickness="0" Margin="2"
+                                                    ToolTip="Редактировать"/>
+
+                                            <Button Content="❌" 
+                                                    Tag="{Binding Id}"
+                                                    Click="DeleteMedicineBtn_Click" 
+                                                    Width="25" Height="25"
+                                                    Background="#E74C3C" Foreground="White"
+                                                    BorderThickness="0" Margin="2"
+                                                    ToolTip="Удалить"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </Border>
 
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10,0">
+                                    <StackPanel>
+                                      
+                                        <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Padding="0,0,0,5" Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding Description}" 
+                                                      FontSize="11" 
+                                                      TextWrapping="Wrap" 
+                                                      Foreground="#666"
+                                                      MaxHeight="60"
+                                                      TextTrimming="CharacterEllipsis"/>
+                                        </Border>
 
+                                  
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                                            <TextBlock Text="Цена:" Margin="0,0,5,0" 
+                                                      FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Price}" 
+                                                      Foreground="#27AE60" FontSize="14" FontWeight="Bold"/>
+                                        </StackPanel>
 
+                                     
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                                            <TextBlock Text="В наличии:" Margin="0,0,5,0" 
+                                                      FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding StockQuantity}" FontSize="11"/>
+                                            <TextBlock Text=" шт." FontSize="11" Margin="5,0,0,0"/>
+                                        </StackPanel>
 
+                                   
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                                            <TextBlock Text="Категория:" Margin="0,0,5,0" 
+                                                      FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Category}" 
+                                                      FontSize="11" Foreground="#3498DB"
+                                                      TextWrapping="Wrap"
+                                                      MaxWidth="150"/>
+                                        </StackPanel>
 
-                             
-
-
-
-
-
-                                <StackPanel Grid.Row="1" Margin="10,0">
-                                    <TextBlock Text="{Binding Description}" FontSize="9" 
-                                              TextWrapping="Wrap" Height="40" Foreground="#666" Margin="0,0,0,5"/>
-
-                                    <TextBlock Text="{Binding Price}" FontWeight="Bold" Foreground="#27AE60" Margin="0,0,0,5"/>
-
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                        <TextBlock Text="В наличии:" Margin="0,0,5,0" FontSize="10"/>
-                                        <TextBlock Text="{Binding StockQuantity}" FontSize="10"/>
-                                        <TextBlock Text=" шт." FontSize="10" Margin="5,0,0,0"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                            <TextBlock Text="Рецепт:" Margin="0,0,5,0" 
+                                                      FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding RequiresPrescriptionText}" 
+                                                      FontSize="11"
+                                                      Foreground="{Binding RequiresPrescriptionColor}"/>
+                                        </StackPanel>
                                     </StackPanel>
+                                </ScrollViewer>
 
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Рецепт:" Margin="0,0,5,0" FontSize="10"/>
-                                        <TextBlock Text="{Binding RequiresPrescriptionText}" FontSize="10"/>
-                                    </StackPanel>
-                                </StackPanel>
-
-                              
+                           
                                 <Button Grid.Row="2" 
                                        Content="В КОРЗИНУ" 
                                        Click="AddToCart_Click" 
-                                       Tag="{Binding}"
+                                       Tag="{Binding Id}"
                                        Background="#3498DB" 
                                        Foreground="White"
                                        BorderThickness="0"
-                                       Height="40"
+                                       Height="35"
                                        Margin="15,5,15,10"
-                                       FontSize="13"
+                                       FontSize="12"
                                        FontWeight="Bold"
                                        Cursor="Hand"
                                        VerticalAlignment="Center"/>
@@ -126,7 +207,7 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Статус бар -->
+       
         <StatusBar Grid.Row="2">
             <StatusBarItem>
                 <TextBlock x:Name="StatusText" Text="Готов к работе"/>

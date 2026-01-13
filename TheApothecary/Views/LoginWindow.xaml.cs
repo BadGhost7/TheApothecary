@@ -7,56 +7,63 @@ namespace TheApothecary.Views
     {
         public string Username { get; private set; }
         public string Password { get; private set; }
-        public bool DialogResult { get; private set; }
 
         public LoginWindow()
         {
             InitializeComponent();
 
-            // Инициализация плейсхолдеров
-            EmailTextBox.GotFocus += EmailTextBox_GotFocus;
-            EmailTextBox.LostFocus += EmailTextBox_LostFocus;
+           
+            LoginTextBox.GotFocus += LoginTextBox_GotFocus;
+            LoginTextBox.LostFocus += LoginTextBox_LostFocus; 
             PasswordBox.GotFocus += PasswordBox_GotFocus;
             PasswordBox.LostFocus += PasswordBox_LostFocus;
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // EmailTextBox используется как поле для username
-            Username = EmailTextBox.Text;
-            Password = PasswordBox.Password;
+            
+            string loginInput = LoginTextBox.Text; 
+            string password = PasswordBox.Password;
 
-            if (string.IsNullOrWhiteSpace(Username))
+          
+            if (string.IsNullOrWhiteSpace(loginInput) || loginInput == "Логин")
             {
-                MessageBox.Show("Введите email/логин", "Ошибка");
+                MessageBox.Show("Введите логин или email", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(Password))
+            if (string.IsNullOrWhiteSpace(password))
             {
-                MessageBox.Show("Введите пароль", "Ошибка");
+                MessageBox.Show("Введите пароль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            DialogResult = true;
-            Close();
+          
+            Username = loginInput;
+            Password = password;
+
+           
+            this.DialogResult = true;
+            this.Close();
         }
 
-        private void EmailTextBox_GotFocus(object sender, RoutedEventArgs e)
+        private void LoginTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            if (EmailTextBox.Text == "Email")
+            var textBox = (TextBox)sender;
+            if (textBox.Text == "Логин") 
             {
-                EmailTextBox.Text = "";
-                EmailTextBox.Foreground = System.Windows.Media.Brushes.Black;
+                textBox.Text = "";
+                textBox.Foreground = System.Windows.Media.Brushes.Black;
             }
         }
 
-        private void EmailTextBox_LostFocus(object sender, RoutedEventArgs e)
+        private void LoginTextBox_LostFocus(object sender, RoutedEventArgs e) 
         {
-            if (string.IsNullOrWhiteSpace(EmailTextBox.Text))
+            var textBox = (TextBox)sender;
+            if (string.IsNullOrWhiteSpace(textBox.Text))
             {
-                EmailTextBox.Text = "Email";
-                EmailTextBox.Foreground = System.Windows.Media.Brushes.Gray;
+                textBox.Text = "Логин"; 
+                textBox.Foreground = System.Windows.Media.Brushes.Gray;
             }
         }
 
@@ -75,8 +82,9 @@ namespace TheApothecary.Views
 
         private void RegisterText_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            DialogResult = false;
-            Close();
+           
+            this.DialogResult = false;
+            this.Close();
         }
     }
 }

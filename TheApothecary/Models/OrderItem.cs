@@ -14,7 +14,7 @@ namespace TheApothecary.Models
         public int Quantity { get; set; }
         public decimal Price { get; set; }
 
-        // Навигационные свойства
+       
         public Order Order { get; set; }
         public Medicine Medicine { get; set; }
     }

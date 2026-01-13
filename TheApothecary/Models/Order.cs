@@ -18,7 +18,7 @@ namespace TheApothecary.Models
         public string ShippingAddress { get; set; }
         public string PhoneNumber { get; set; }
 
-        // Навигационные свойства
+   
         public User User { get; set; }
         public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
