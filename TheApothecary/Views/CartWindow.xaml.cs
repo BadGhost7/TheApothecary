@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Collections.Generic;
 using System.Linq;
 using TheApothecary.Models;
+using TheApothecary.Data;
 
 namespace TheApothecary.Views
 {
@@ -10,198 +12,276 @@ namespace TheApothecary.Views
     {
         private List<CartItem> cartItems;
         private User currentUser;
+        private PharmacyDbContext db;
+
+        // Класс для отображения товара в корзине
+        public class CartDisplayItem
+        {
+            public CartItem CartItem { get; set; }
+            public Medicine Medicine { get; set; }
+            public int Quantity { get; set; }
+            public string Price { get; set; }
+            public string TotalPrice { get; set; }
+            public bool RequiresPrescription { get; set; }
+            public string PrescriptionStatusText { get; set; }
+            public string PrescriptionStatusColor { get; set; }
+            public bool ShowRequestButton { get; set; }
+        }
+
+        // Конвертер для Boolean в текст
+        public class BoolToTextConverter : System.Windows.Data.IValueConverter
+        {
+            public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            {
+                if (value is bool boolValue)
+                {
+                    return boolValue ? "Требуется" : "Не требуется";
+                }
+                return "Не требуется";
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        // Конвертер для Boolean в цвет
+        public class BoolToColorConverter : System.Windows.Data.IValueConverter
+        {
+            public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            {
+                if (value is bool boolValue)
+                {
+                    return boolValue ? "#E74C3C" : "#27AE60";
+                }
+                return "#95A5A6";
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         public CartWindow(List<CartItem> items, User user)
         {
             InitializeComponent();
-            cartItems = items ?? new List<CartItem>();
+            cartItems = items;
             currentUser = user;
-            LoadCartData();
+            db = PharmacyDbContext.Instance;
+
+            // Добавляем конвертеры в ресурсы
+            this.Resources.Add("BoolToVisText", new BoolToTextConverter());
+            this.Resources.Add("BoolToColor", new BoolToColorConverter());
+
+            LoadCartItems();
             UpdateTotal();
-            CheckPrescriptionRequirements();
         }
 
-        private void LoadCartData()
+        private void LoadCartItems()
         {
-          
-            var displayItems = cartItems.Select(item => new
-            {
-                Medicine = item.Medicine,
-                Quantity = item.Quantity,
-                Price = item.Medicine.Price,
-              
-                TotalPrice = item.Medicine.Price * item.Quantity, 
-                RequiresPrescription = item.Medicine.RequiresPrescription ? "Да" : "Нет",
-                RequiresPrescriptionTextColor = item.Medicine.RequiresPrescription ? "#E74C3C" : "#27AE60",
-                IsPrescriptionVerified = item.IsPrescriptionVerified ? "Да" : "Нет",
-                IsPrescriptionVerifiedTextColor = item.IsPrescriptionVerified ? "#27AE60" : "#E74C3C",
-                OriginalItem = item
-            }).ToList();
-
-          
-            CartItemsControl.ItemsSource = displayItems;
-        }
-
-       
-        private decimal CalculateTotal()
-        {
-            decimal total = 0;
+            var displayItems = new List<CartDisplayItem>();
+            bool hasPrescriptionItems = false;
+            bool hasUnverifiedItems = false;
 
             foreach (var item in cartItems)
             {
-                if (item.Medicine != null)
+                // Проверяем статус рецепта в базе данных
+                bool hasApprovedPrescription = false;
+                if (item.Medicine.RequiresPrescription && currentUser != null)
                 {
-                    total += item.Medicine.Price * item.Quantity;
+                    hasApprovedPrescription = db.HasApprovedPrescription(currentUser.Id, item.Medicine.Id);
+                    item.IsPrescriptionVerified = hasApprovedPrescription;
+                }
+
+                var displayItem = new CartDisplayItem
+                {
+                    CartItem = item,
+                    Medicine = item.Medicine,
+                    Quantity = item.Quantity,
+                    Price = item.Medicine.Price.ToString("F2") + "₽",
+                    TotalPrice = (item.Medicine.Price * item.Quantity).ToString("F2") + "₽",
+                    RequiresPrescription = item.Medicine.RequiresPrescription,
+                    PrescriptionStatusText = item.Medicine.RequiresPrescription
+                        ? (hasApprovedPrescription ? "✅ Проверен" : "⏳ Ожидает проверки")
+                        : "✅ Не требуется",
+                    PrescriptionStatusColor = item.Medicine.RequiresPrescription
+                        ? (hasApprovedPrescription ? "#27AE60" : "#F39C12")
+                        : "#95A5A6",
+                    ShowRequestButton = item.Medicine.RequiresPrescription &&
+                                       !hasApprovedPrescription &&
+                                       currentUser != null
+                };
+
+                displayItems.Add(displayItem);
+
+                if (item.Medicine.RequiresPrescription)
+                {
+                    hasPrescriptionItems = true;
+                    if (!hasApprovedPrescription)
+                    {
+                        hasUnverifiedItems = true;
+                    }
                 }
             }
 
-            return total;
+            CartItemsControl.ItemsSource = displayItems;
+
+            // Показываем/скрываем предупреждение
+            if (hasPrescriptionItems)
+            {
+                PrescriptionWarningBorder.Visibility = Visibility.Visible;
+                if (hasUnverifiedItems)
+                {
+                    PrescriptionWarningText.Text = "⚠️ Некоторые товары требуют проверки рецепта. Нажмите 'Запросить проверку рецепта' для отправки запроса сотруднику.";
+                }
+                else
+                {
+                    PrescriptionWarningText.Text = "✅ Все рецепты проверены. Можете оформлять заказ.";
+                }
+            }
+            else
+            {
+                PrescriptionWarningBorder.Visibility = Visibility.Collapsed;
+            }
         }
 
-        
-        private decimal CalculateItemTotal(decimal price, int quantity)
+        // КНОПКА ДЛЯ ЗАПРОСА ПРОВЕРКИ РЕЦЕПТА
+        private void RequestPrescriptionCheck_Click(object sender, RoutedEventArgs e)
         {
-            return price * quantity;
+            if (currentUser == null)
+            {
+                MessageBox.Show("Для запроса проверки рецепта необходимо войти в систему",
+                               "Требуется авторизация",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Warning);
+                return;
+            }
+
+            var button = (Button)sender;
+            int medicineId = (int)button.Tag;
+
+            // Находим лекарство в корзине
+            var cartItem = cartItems.FirstOrDefault(item => item.Medicine.Id == medicineId);
+            if (cartItem == null) return;
+
+            // Проверяем, не отправлен ли уже запрос
+            if (cartItem.IsPrescriptionVerified)
+            {
+                MessageBox.Show("Рецепт для этого лекарства уже проверен!",
+                               "Информация",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Information);
+                return;
+            }
+
+            // Создаем запрос на проверку
+            bool success = db.CreatePrescriptionRequest(
+                currentUser.Id,
+                currentUser.Username,
+                medicineId,
+                cartItem.Medicine.Name
+            );
+
+            if (success)
+            {
+                MessageBox.Show("✅ Запрос на проверку рецепта отправлен!\n\n" +
+                               "Сотрудник проверит ваш рецепт и уведомит вас.\n" +
+                               "Вы получите уведомление, когда рецепт будет проверен.",
+                               "Запрос отправлен",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Information);
+
+                // Обновляем интерфейс
+                LoadCartItems();
+            }
+            else
+            {
+                MessageBox.Show("❌ Не удалось отправить запрос. Возможно, запрос уже существует.",
+                               "Ошибка",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Error);
+            }
         }
 
-        
-        private decimal CalculateTotalAmount()
+        // Остальные методы оставляем как есть...
+        private void RemoveItem_Click(object sender, RoutedEventArgs e)
         {
-            return CalculateTotal(); 
-        }
+            var button = (Button)sender;
+            int medicineId = (int)button.Tag;
 
-        private void CheckPrescriptionRequirements()
-        {
-            bool hasUnverifiedPrescriptions = cartItems.Any(item =>
-                item.Medicine.RequiresPrescription && !item.IsPrescriptionVerified);
-
-            PrescriptionWarningText.Visibility = hasUnverifiedPrescriptions ?
-                Visibility.Visible : Visibility.Collapsed;
+            var itemToRemove = cartItems.FirstOrDefault(item => item.Medicine.Id == medicineId);
+            if (itemToRemove != null)
+            {
+                cartItems.Remove(itemToRemove);
+                LoadCartItems();
+                UpdateTotal();
+            }
         }
 
         private void UpdateTotal()
         {
-            if (cartItems == null || !cartItems.Any())
-            {
-                TotalText.Text = "Итого: 0₽ (товаров: 0)";
-                return;
-            }
-
-            decimal total = CalculateTotalAmount(); 
             int totalItems = cartItems.Sum(item => item.Quantity);
-            TotalText.Text = $"Итого: {total:F2}₽ (товаров: {totalItems})";
-        }
+            decimal totalPrice = cartItems.Sum(item => item.Medicine.Price * item.Quantity);
 
-        private void RemoveItem_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button)
-            {
-                dynamic dataContext = button.DataContext;
-                var originalItem = dataContext.OriginalItem as CartItem;
+            TotalText.Text = $"Итого: {totalPrice:F2}₽ (товаров: {totalItems})";
 
-                if (originalItem != null)
-                {
-                    cartItems.Remove(originalItem);
-                    LoadCartData();
-                    UpdateTotal();
-                    CheckPrescriptionRequirements();
-                }
-            }
-        }
-
-        private void VerifyPrescription_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button)
-            {
-                dynamic dataContext = button.DataContext;
-                var originalItem = dataContext.OriginalItem as CartItem;
-
-                if (originalItem != null)
-                {
-                    if (currentUser == null || currentUser.Role == UserRole.Customer)
-                    {
-                        MessageBox.Show("Только сотрудники могут проверять рецепты", "Ошибка",
-                                      MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-
-                    originalItem.IsPrescriptionVerified = true;
-                    LoadCartData();
-                    CheckPrescriptionRequirements();
-
-                    MessageBox.Show($"Рецепт для '{originalItem.Medicine.Name}' подтвержден!", "Успех",
-                                  MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-        }
-
-        private void CheckoutButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (cartItems == null || !cartItems.Any())
-            {
-                MessageBox.Show("Корзина пуста", "Информация",
-                              MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-        
-            bool allPrescriptionsVerified = true;
-            List<string> unverifiedMeds = new List<string>();
-
+            // Проверяем можно ли оформить заказ
+            bool canCheckout = true;
             foreach (var item in cartItems)
             {
                 if (item.Medicine.RequiresPrescription && !item.IsPrescriptionVerified)
                 {
-                    allPrescriptionsVerified = false;
-                    unverifiedMeds.Add(item.Medicine.Name);
+                    canCheckout = false;
+                    break;
                 }
             }
 
-            if (!allPrescriptionsVerified)
-            {
-                string medsList = string.Join(", ", unverifiedMeds);
-                MessageBox.Show($"Следующие товары требуют проверки рецепта: {medsList}", "Ошибка",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-        
-            bool allInStock = true;
-            List<string> outOfStockMeds = new List<string>();
-
-            foreach (var item in cartItems)
-            {
-                if (item.Quantity > item.Medicine.StockQuantity)
-                {
-                    allInStock = false;
-                    outOfStockMeds.Add($"{item.Medicine.Name} (требуется: {item.Quantity}, в наличии: {item.Medicine.StockQuantity})");
-                }
-            }
-
-            if (!allInStock)
-            {
-                string stockList = string.Join("\n", outOfStockMeds);
-                MessageBox.Show($"Недостаточно товаров на складе:\n{stockList}", "Ошибка",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-         
-            decimal totalAmount = CalculateTotalAmount(); 
-
-            MessageBox.Show($"Заказ успешно оформлен!\nОбщая сумма: {totalAmount:F2}₽\nСпасибо за покупку!", "Успех",
-                          MessageBoxButton.OK, MessageBoxImage.Information);
-
-           
-            cartItems.Clear();
-            this.DialogResult = true;
-            this.Close();
+            CheckoutButton.IsEnabled = canCheckout && cartItems.Count > 0;
+            CheckoutButton.Content = canCheckout ? "✅ Оформить заказ" : "❌ Требуется проверка рецептов";
+            CheckoutButton.Background = canCheckout ? System.Windows.Media.Brushes.Green : System.Windows.Media.Brushes.Gray;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
-            this.Close();
+            DialogResult = true;
+            Close();
+        }
+
+        private void CheckoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!cartItems.Any())
+            {
+                MessageBox.Show("Корзина пуста", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // Проверяем все ли рецепты проверены
+            foreach (var item in cartItems)
+            {
+                if (item.Medicine.RequiresPrescription && !item.IsPrescriptionVerified)
+                {
+                    MessageBox.Show("Некоторые лекарства требуют проверки рецепта перед покупкой",
+                                   "Требуется проверка",
+                                   MessageBoxButton.OK,
+                                   MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            MessageBox.Show("✅ Заказ успешно оформлен!\n\n" +
+                           $"Количество товаров: {cartItems.Sum(i => i.Quantity)}\n" +
+                           $"Общая сумма: {cartItems.Sum(i => i.Medicine.Price * i.Quantity):F2}₽\n\n" +
+                           "Спасибо за покупку!",
+                           "Заказ оформлен",
+                           MessageBoxButton.OK,
+                           MessageBoxImage.Information);
+
+            // Очищаем корзину после успешного заказа
+            cartItems.Clear();
+            DialogResult = true;
+            Close();
         }
     }
 }

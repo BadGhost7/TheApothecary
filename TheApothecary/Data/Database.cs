@@ -12,6 +12,7 @@ namespace TheApothecary.Data
         public DbSet<Medicine> Medicines { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<PrescriptionRequest> PrescriptionRequests { get; set; }
 
         // СИНГЛТОН для удобства
         private static PharmacyDbContext _instance;
@@ -96,14 +97,86 @@ namespace TheApothecary.Data
                 entity.Property(e => e.Role).IsRequired();
             });
 
+            modelBuilder.Entity<PrescriptionRequest>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.MedicineName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.EmployeeNotes).HasMaxLength(500);
+                entity.Property(e => e.Status).IsRequired();
+                entity.Property(e => e.RequestDate).IsRequired();
+            });
+
             modelBuilder.Entity<CartItem>(entity =>
             {
                 entity.HasKey(e => e.Id);
             });
         }
 
-        // ПЕРВИЧНАЯ ИНИЦИАЛИЗАЦИЯ БАЗЫ
-        public void Initialize()
+        public bool CreatePrescriptionRequest(int userId, string userName, int medicineId, string medicineName)
+        {
+            try
+            {
+                var request = new PrescriptionRequest
+                {
+                    UserId = userId,
+                    UserName = userName,
+                    MedicineId = medicineId,
+                    MedicineName = medicineName,
+                    RequestDate = DateTime.Now,
+                    Status = PrescriptionStatus.Pending
+                };
+
+                PrescriptionRequests.Add(request);
+                SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public List<PrescriptionRequest> GetPendingRequests()
+        {
+            return PrescriptionRequests
+                .Where(r => r.Status == PrescriptionStatus.Pending)
+                .OrderBy(r => r.RequestDate)
+                .ToList();
+        }
+
+        public bool UpdatePrescriptionStatus(int requestId, PrescriptionStatus status, int employeeId, string notes = "")
+        {
+            try
+            {
+                var request = PrescriptionRequests.Find(requestId);
+                if (request == null)
+                    return false;
+
+                request.Status = status;
+                request.ReviewedByEmployeeId = employeeId;
+                request.EmployeeNotes = notes;
+                request.ReviewDate = DateTime.Now;
+
+                SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+    public bool HasApprovedPrescription(int userId, int medicineId)
+    {
+            return PrescriptionRequests.Any(r =>
+                r.UserId == userId &&
+                r.MedicineId == medicineId &&
+                r.Status == PrescriptionStatus.Approved);
+    }
+
+    // ПЕРВИЧНАЯ ИНИЦИАЛИЗАЦИЯ БАЗЫ
+    public void Initialize()
         {
             try
             {
@@ -204,7 +277,7 @@ namespace TheApothecary.Data
             };
         }
 
-        // ОСТАЛЬНЫЕ МЕТОДЫ
+       
         public List<Medicine> GetAllMedicines()
         {
             try
@@ -243,17 +316,16 @@ namespace TheApothecary.Data
             }
         }
 
-        // МЕТОД ДЛЯ ПРОВЕРКИ ЛОГИНА
         public User Login(string username, string password)
         {
             try
             {
-                // Ищем по username (логину)
+                
                 var user = Users.FirstOrDefault(u =>
                     u.Username.ToLower() == username.ToLower() &&
                     u.Password == password);
 
-                // Если не нашли по username, пробуем найти по email
+               
                 if (user == null)
                 {
                     user = Users.FirstOrDefault(u =>

@@ -114,9 +114,22 @@ namespace TheApothecary
                 MedicinesItemsControl.ItemsSource = null;
             }
         }
-    
+        private void CheckPrescriptionsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentUser == null ||
+                (currentUser.Role != UserRole.Employee && currentUser.Role != UserRole.Admin))
+            {
+                MessageBox.Show("Только сотрудники могут проверять рецепты",
+                               "Доступ запрещен", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-        
+            var requestsWindow = new PrescriptionRequestsWindow(currentUser);
+            requestsWindow.Owner = this;
+            requestsWindow.ShowDialog();
+        }
+
+
         private void AddToCart_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null)
@@ -160,7 +173,7 @@ namespace TheApothecary
             CartBtn.IsEnabled = currentUser != null;
         }
 
-      
+
         private void CartBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null)
@@ -176,12 +189,43 @@ namespace TheApothecary
             UpdateCartButton();
         }
 
-        
+        private void CheckPrescriptionStatusAfterLogin()
+        {
+            if (currentUser == null) return;
+
+            try
+            {
+                var db = PharmacyDbContext.Instance;
+
+                // Проверяем только одобренные рецепты за последний день
+                var approvedToday = db.PrescriptionRequests
+                    .Where(r => r.UserId == currentUser.Id &&
+                               r.Status == PrescriptionStatus.Approved &&
+                               r.ReviewDate.HasValue &&
+                               r.ReviewDate.Value.Date == DateTime.Today)
+                    .ToList();
+
+                if (approvedToday.Any())
+                {
+                    string medicines = string.Join(", ", approvedToday.Select(r => r.MedicineName));
+                    MessageBox.Show($"✅ Ваши рецепты проверены!\n\n" +
+                                   $"Одобренные лекарства: {medicines}\n\n" +
+                                   $"Теперь вы можете оформить заказ в корзине.",
+                                   "Рецепты проверены",
+                                   MessageBoxButton.OK,
+                                   MessageBoxImage.Information);
+                }
+            }
+            catch
+            {
+                // Игнорируем ошибки при проверке
+            }
+        }
         private void LoginBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser != null)
             {
-               
+                // Если пользователь уже авторизован - это кнопка выхода
                 Logout();
                 return;
             }
@@ -191,7 +235,7 @@ namespace TheApothecary
 
             bool? result = loginWindow.ShowDialog();
 
-            if (result == true) 
+            if (result == true) // Успешный вход
             {
                 var db = PharmacyDbContext.Instance;
                 currentUser = db.Login(loginWindow.Username, loginWindow.Password);
@@ -200,21 +244,33 @@ namespace TheApothecary
                 {
                     UpdateUserInterface();
                     StatusText.Text = $"Добро пожаловать, {currentUser.Username}! (Роль: {currentUser.Role})";
+
+                    // ПРОВЕРЯЕМ СТАТУС РЕЦЕПТОВ ПОСЛЕ ВХОДА
+                    CheckPrescriptionStatusAfterLogin();
                 }
                 else
                 {
-                    MessageBox.Show("Неверный логин или пароль", "Ошибка авторизации",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("❌ Неверный логин или пароль\n\n" +
+                                  $"Вы ввели: '{loginWindow.Username}'\n" +
+                                  $"Попробуйте использовать логин, который был показан при регистрации.\n\n" +
+                                  $"Тестовые аккаунты:\n" +
+                                  $"• admin/admin123 (Администратор)\n" +
+                                  $"• employee/employee123 (Сотрудник)\n" +
+                                  $"• customer/customer123 (Покупатель)",
+                                  "Ошибка авторизации",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Error);
                     StatusText.Text = "Неверный логин или пароль";
                 }
             }
-            else if (result == false)
+            else if (result == false) // Пользователь нажал "Зарегистрироваться"
             {
                 OpenRegistrationWindow();
             }
         }
 
-        
+
+
         private void RegisterBtn_Click(object sender, RoutedEventArgs e)
         {
             OpenRegistrationWindow();
@@ -262,7 +318,7 @@ namespace TheApothecary
             }
         }
 
-       
+
         private void Logout()
         {
             var result = MessageBox.Show($"Вы уверены, что хотите выйти из аккаунта {currentUser.Username}?",
@@ -271,14 +327,14 @@ namespace TheApothecary
             if (result == MessageBoxResult.Yes)
             {
                 currentUser = null;
-                cartItems.Clear(); 
+                cartItems.Clear(); // Очищаем корзину при выходе
                 UpdateUserInterface();
                 UpdateCartButton();
                 StatusText.Text = "Вы вышли из системы";
             }
         }
 
-      
+
         private void UpdateUserInterface()
         {
             if (currentUser != null)
@@ -287,16 +343,21 @@ namespace TheApothecary
                 LoginBtn.Content = "Выйти";
                 RegisterBtn.Visibility = Visibility.Collapsed;
 
-                
+                // Показываем/скрываем кнопки управления для сотрудников
                 ManageMedicinesPanel.Visibility =
                     (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin)
                     ? Visibility.Visible : Visibility.Collapsed;
 
+                // Показываем кнопку корзины только для покупателей
                 CartBtn.Visibility =
                     (currentUser.Role == UserRole.Customer)
                     ? Visibility.Visible : Visibility.Collapsed;
+                CartBtn.IsEnabled = true;
 
-                LoadMedicinesFromDatabase();
+                // Показываем кнопку проверки рецептов только для сотрудников
+                CheckPrescriptionsBtn.Visibility =
+                    (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin)
+                    ? Visibility.Visible : Visibility.Collapsed;
             }
             else
             {
@@ -306,13 +367,11 @@ namespace TheApothecary
                 ManageMedicinesPanel.Visibility = Visibility.Collapsed;
                 CartBtn.Visibility = Visibility.Visible;
                 CartBtn.IsEnabled = false;
-
-               
-                LoadMedicinesFromDatabase();
+                CheckPrescriptionsBtn.Visibility = Visibility.Collapsed;
             }
         }
 
-       
+
         private void UpdateMedicineControlsVisibility()
         {
           

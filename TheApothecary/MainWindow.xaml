@@ -39,6 +39,11 @@
                                 Width="90" Height="30" Click="AddMedicineBtn_Click"
                                 Background="#27AE60" Foreground="White" BorderThickness="0"
                                 Margin="0,0,5,0"/>
+                        <Button x:Name="CheckPrescriptionsBtn" Content="📋 Проверить рецепты" 
+                                Width="140" Height="30" Click="CheckPrescriptionsBtn_Click"
+                                Background="#3498DB" Foreground="White" BorderThickness="0"
+                                Margin="0,0,5,0"
+                                ToolTip="Проверить запросы на рецепты"/>
                     </StackPanel>
 
                 
