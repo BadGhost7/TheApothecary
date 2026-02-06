@@ -5,8 +5,17 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-       
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <!-- Стиль для панели управления лекарствами -->
+        <Style x:Key="MedicineControlsStyle" TargetType="StackPanel">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEmployee}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -16,7 +25,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-    
         <Border Grid.Row="0" Background="#2C3E50" Padding="15">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -32,7 +40,6 @@
                     <TextBlock x:Name="UserInfoText" Text="Гость" 
                               Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0"/>
 
-             
                     <StackPanel x:Name="ManageMedicinesPanel" Orientation="Horizontal" 
                                 Visibility="Collapsed" Margin="5,0,10,0">
                         <Button x:Name="AddMedicineBtn" Content="➕ Добавить" 
@@ -46,7 +53,6 @@
                                 ToolTip="Проверить запросы на рецепты"/>
                     </StackPanel>
 
-                
                     <Button Content="✅ Проверить" 
                             Click="CheckDbButton_Click" 
                             Width="90" Height="30"
@@ -61,7 +67,6 @@
                             Margin="0,0,15,0"
                             ToolTip="Сбросить базу данных"/>
 
-              
                     <Button x:Name="LoginBtn" Content="Войти" Click="LoginBtn_Click" 
                             Width="70" Height="30"
                             Background="Transparent" Foreground="White" BorderThickness="0" 
@@ -80,7 +85,6 @@
             </Grid>
         </Border>
 
-     
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <ItemsControl x:Name="MedicinesItemsControl" Margin="20">
                 <ItemsControl.ItemsPanel>
@@ -96,7 +100,6 @@
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                               
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
@@ -116,13 +119,12 @@
                                                       FontSize="13" 
                                                       VerticalAlignment="Center"
                                                       MaxWidth="140"/>
-                                      
                                         </StackPanel>
 
-                                      
+                                        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ЛЕКАРСТВАМИ - Теперь видна у сотрудников -->
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" 
                                                     x:Name="MedicineControlsPanel" 
-                                                    Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Style="{StaticResource MedicineControlsStyle}"
                                                     Margin="0,0,5,0">
                                             <Button Content="✏️" 
                                                     Tag="{Binding Id}"
@@ -130,7 +132,8 @@
                                                     Width="25" Height="25"
                                                     Background="#F39C12" Foreground="White"
                                                     BorderThickness="0" Margin="2"
-                                                    ToolTip="Редактировать"/>
+                                                    ToolTip="Редактировать"
+                                                    Cursor="Hand"/>
 
                                             <Button Content="❌" 
                                                     Tag="{Binding Id}"
@@ -138,14 +141,14 @@
                                                     Width="25" Height="25"
                                                     Background="#E74C3C" Foreground="White"
                                                     BorderThickness="0" Margin="2"
-                                                    ToolTip="Удалить"/>
+                                                    ToolTip="Удалить"
+                                                    Cursor="Hand"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
 
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="10,0">
                                     <StackPanel>
-                                      
                                         <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Padding="0,0,0,5" Margin="0,0,0,5">
                                             <TextBlock Text="{Binding Description}" 
                                                       FontSize="11" 
@@ -155,7 +158,6 @@
                                                       TextTrimming="CharacterEllipsis"/>
                                         </Border>
 
-                                  
                                         <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                                             <TextBlock Text="Цена:" Margin="0,0,5,0" 
                                                       FontSize="11" FontWeight="SemiBold"/>
@@ -163,7 +165,6 @@
                                                       Foreground="#27AE60" FontSize="14" FontWeight="Bold"/>
                                         </StackPanel>
 
-                                     
                                         <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                                             <TextBlock Text="В наличии:" Margin="0,0,5,0" 
                                                       FontSize="11" FontWeight="SemiBold"/>
@@ -171,7 +172,6 @@
                                             <TextBlock Text=" шт." FontSize="11" Margin="5,0,0,0"/>
                                         </StackPanel>
 
-                                   
                                         <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                                             <TextBlock Text="Категория:" Margin="0,0,5,0" 
                                                       FontSize="11" FontWeight="SemiBold"/>
@@ -191,7 +191,7 @@
                                     </StackPanel>
                                 </ScrollViewer>
 
-                           
+                                <!-- КНОПКА В КОРЗИНУ - Теперь скрыта у сотрудников -->
                                 <Button Grid.Row="2" 
                                        Content="В КОРЗИНУ" 
                                        Click="AddToCart_Click" 
@@ -204,7 +204,18 @@
                                        FontSize="12"
                                        FontWeight="Bold"
                                        Cursor="Hand"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEmployee}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -212,7 +223,6 @@
             </ItemsControl>
         </ScrollViewer>
 
-       
         <StatusBar Grid.Row="2">
             <StatusBarItem>
                 <TextBlock x:Name="StatusText" Text="Готов к работе"/>

@@ -17,7 +17,6 @@ namespace TheApothecary
         private List<CartItem> cartItems;
         private User currentUser;
 
-      
         public class MedicineDisplay
         {
             public int Id { get; set; }
@@ -34,28 +33,14 @@ namespace TheApothecary
 
         public MainWindow()
         {
-           
-
             InitializeComponent();
-
-         
             InitializeDatabase();
-
-           
             LoadMedicinesFromDatabase();
-
-          
             cartItems = new List<CartItem>();
-
-           
             UpdateUserInterface();
             UpdateCartButton();
-
-       
-
         }
 
-   
         private void InitializeDatabase()
         {
             try
@@ -69,7 +54,6 @@ namespace TheApothecary
             }
         }
 
-  
         private void LoadMedicinesFromDatabase()
         {
             try
@@ -87,11 +71,11 @@ namespace TheApothecary
                     StatusText.Text = $"Загружено лекарств: {medicines.Count}";
                 }
 
-                
+                // ВСЕГДА показываем кнопки редактирования/удаления в XAML
+                // Управление видимостью будет через DataTrigger
                 bool isEmployee = currentUser != null &&
                                  (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin);
 
-          
                 var displayMedicines = medicines.Select(med => new MedicineDisplay
                 {
                     Id = med.Id,
@@ -103,7 +87,7 @@ namespace TheApothecary
                     RequiresPrescriptionText = med.RequiresPrescription ? "Требуется" : "Не требуется",
                     RequiresPrescriptionColor = med.RequiresPrescription ? "#E74C3C" : "#27AE60",
                     Category = med.Category,
-                    IsEmployee = isEmployee 
+                    IsEmployee = isEmployee // Теперь правильно рассчитывается
                 }).ToList();
 
                 MedicinesItemsControl.ItemsSource = displayMedicines;
@@ -114,6 +98,7 @@ namespace TheApothecary
                 MedicinesItemsControl.ItemsSource = null;
             }
         }
+
         private void CheckPrescriptionsBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null ||
@@ -129,13 +114,20 @@ namespace TheApothecary
             requestsWindow.ShowDialog();
         }
 
-
         private void AddToCart_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null)
             {
                 MessageBox.Show("Пожалуйста, войдите в систему чтобы добавлять товары в корзину",
                     "Требуется авторизация", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // ПРОВЕРЯЕМ РОЛЬ: ТОЛЬКО ПОКУПАТЕЛИ МОГУТ ДОБАВЛЯТЬ В КОРЗИНУ
+            if (currentUser.Role != UserRole.Customer)
+            {
+                MessageBox.Show("Только покупатели могут добавлять товары в корзину. Сотрудники и администраторы могут только управлять ассортиментом.",
+                    "Доступ запрещен", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -170,9 +162,8 @@ namespace TheApothecary
         {
             int cartCount = cartItems.Sum(item => item.Quantity);
             CartBtn.Content = $"🛒 Корзина ({cartCount})";
-            CartBtn.IsEnabled = currentUser != null;
+            CartBtn.IsEnabled = currentUser != null && currentUser.Role == UserRole.Customer;
         }
-
 
         private void CartBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -197,7 +188,6 @@ namespace TheApothecary
             {
                 var db = PharmacyDbContext.Instance;
 
-                // Проверяем только одобренные рецепты за последний день
                 var approvedToday = db.PrescriptionRequests
                     .Where(r => r.UserId == currentUser.Id &&
                                r.Status == PrescriptionStatus.Approved &&
@@ -221,11 +211,11 @@ namespace TheApothecary
                 // Игнорируем ошибки при проверке
             }
         }
+
         private void LoginBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser != null)
             {
-                // Если пользователь уже авторизован - это кнопка выхода
                 Logout();
                 return;
             }
@@ -235,7 +225,7 @@ namespace TheApothecary
 
             bool? result = loginWindow.ShowDialog();
 
-            if (result == true) // Успешный вход
+            if (result == true)
             {
                 var db = PharmacyDbContext.Instance;
                 currentUser = db.Login(loginWindow.Username, loginWindow.Password);
@@ -245,7 +235,9 @@ namespace TheApothecary
                     UpdateUserInterface();
                     StatusText.Text = $"Добро пожаловать, {currentUser.Username}! (Роль: {currentUser.Role})";
 
-                    // ПРОВЕРЯЕМ СТАТУС РЕЦЕПТОВ ПОСЛЕ ВХОДА
+                    // Перезагружаем лекарства с обновленным IsEmployee
+                    LoadMedicinesFromDatabase();
+
                     CheckPrescriptionStatusAfterLogin();
                 }
                 else
@@ -263,13 +255,11 @@ namespace TheApothecary
                     StatusText.Text = "Неверный логин или пароль";
                 }
             }
-            else if (result == false) // Пользователь нажал "Зарегистрироваться"
+            else if (result == false)
             {
                 OpenRegistrationWindow();
             }
         }
-
-
 
         private void RegisterBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -283,12 +273,11 @@ namespace TheApothecary
 
             bool? result = registrationWindow.ShowDialog();
 
-            if (result == true) 
+            if (result == true)
             {
-            
                 var newUser = new User
                 {
-                    Username = registrationWindow.Username, 
+                    Username = registrationWindow.Username,
                     Email = registrationWindow.Email,
                     Password = registrationWindow.Password,
                     Role = registrationWindow.Role
@@ -297,7 +286,6 @@ namespace TheApothecary
                 var db = PharmacyDbContext.Instance;
                 if (db.AddUser(newUser))
                 {
-                   
                     MessageBox.Show($"Регистрация завершена!\n\n" +
                                    $"Логин: {registrationWindow.Username}\n" +
                                    $"Email: {newUser.Email}\n" +
@@ -318,7 +306,6 @@ namespace TheApothecary
             }
         }
 
-
         private void Logout()
         {
             var result = MessageBox.Show($"Вы уверены, что хотите выйти из аккаунта {currentUser.Username}?",
@@ -327,13 +314,13 @@ namespace TheApothecary
             if (result == MessageBoxResult.Yes)
             {
                 currentUser = null;
-                cartItems.Clear(); // Очищаем корзину при выходе
+                cartItems.Clear();
                 UpdateUserInterface();
                 UpdateCartButton();
+                LoadMedicinesFromDatabase(); // Обновляем список лекарств при выходе
                 StatusText.Text = "Вы вышли из системы";
             }
         }
-
 
         private void UpdateUserInterface()
         {
@@ -343,18 +330,15 @@ namespace TheApothecary
                 LoginBtn.Content = "Выйти";
                 RegisterBtn.Visibility = Visibility.Collapsed;
 
-                // Показываем/скрываем кнопки управления для сотрудников
                 ManageMedicinesPanel.Visibility =
                     (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin)
                     ? Visibility.Visible : Visibility.Collapsed;
 
-                // Показываем кнопку корзины только для покупателей
                 CartBtn.Visibility =
                     (currentUser.Role == UserRole.Customer)
                     ? Visibility.Visible : Visibility.Collapsed;
                 CartBtn.IsEnabled = true;
 
-                // Показываем кнопку проверки рецептов только для сотрудников
                 CheckPrescriptionsBtn.Visibility =
                     (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin)
                     ? Visibility.Visible : Visibility.Collapsed;
@@ -371,14 +355,6 @@ namespace TheApothecary
             }
         }
 
-
-        private void UpdateMedicineControlsVisibility()
-        {
-          
-        
-        }
-
-        // КНОПКА ДЛЯ ПРОВЕРКИ БАЗЫ
         private void CheckDbButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -411,8 +387,6 @@ namespace TheApothecary
             }
         }
 
-        // КНОПКА ДЛЯ СБРОСА БАЗЫ
-     
         private void ResetDbButton_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Закрыть приложение и сбросить базу данных?",
@@ -423,7 +397,6 @@ namespace TheApothecary
                 string appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
                 string appDir = Path.GetDirectoryName(appPath);
 
-                // Создаем простую команду для удаления и перезапуска
                 string cmd = $"/C timeout /t 1 & del /f /q \"{appDir}\\pharmacy.db*\" & start \"\" \"{appPath}\"";
 
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -438,22 +411,13 @@ namespace TheApothecary
             }
         }
 
-        // Метод для закрытия всех соединений с базой данных
         private void CloseDatabaseConnections()
         {
             try
             {
-                // 1. Закрываем контекст базы данных
                 PharmacyDbContext.ResetInstance();
-
-                // 2. Собираем мусор для освобождения ресурсов
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-
-                // 3. Если используете Entity Framework, можно попробовать очистить пулы
-                // Microsoft.EntityFrameworkCore.Sqlite не имеет прямого метода очистки пулов,
-                // но можно попробовать закрыть все соединения через reflection
-
                 Console.WriteLine("Соединения с базой данных закрыты");
             }
             catch (Exception ex)
@@ -462,7 +426,6 @@ namespace TheApothecary
             }
         }
 
-        // КНОПКА ДОБАВЛЕНИЯ ЛЕКАРСТВА (для сотрудников)
         private void AddMedicineBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null ||
@@ -497,7 +460,6 @@ namespace TheApothecary
             }
         }
 
-        // КНОПКА РЕДАКТИРОВАНИЯ ЛЕКАРСТВА
         private void EditMedicineBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null ||
@@ -550,7 +512,6 @@ namespace TheApothecary
             }
         }
 
-        // КНОПКА УДАЛЕНИЯ ЛЕКАРСТВА
         private void DeleteMedicineBtn_Click(object sender, RoutedEventArgs e)
         {
             if (currentUser == null ||
@@ -599,54 +560,10 @@ namespace TheApothecary
             }
         }
 
-        // Обновить видимость кнопок управления лекарствами
-        private void MedicinesItemsControl_Loaded(object sender, RoutedEventArgs e)
+        // Метод для перезагрузки данных с обновленным IsEmployee
+        public void RefreshMedicines()
         {
-            UpdateMedicineControlsInItems();
-        }
-
-        private void UpdateMedicineControlsInItems()
-        {
-            // Получаем все контейнеры элементов
-            var itemsControl = MedicinesItemsControl;
-            var itemContainerGenerator = itemsControl.ItemContainerGenerator;
-
-            foreach (var item in itemsControl.Items)
-            {
-                var container = itemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
-                if (container != null)
-                {
-                    // Находим панель управления внутри контейнера
-                    var controlsPanel = FindVisualChild<StackPanel>(container, "MedicineControlsPanel");
-                    if (controlsPanel != null)
-                    {
-                        // Устанавливаем видимость в зависимости от роли пользователя
-                        controlsPanel.Visibility = (currentUser != null &&
-                            (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin))
-                            ? Visibility.Visible : Visibility.Collapsed;
-                    }
-                }
-            }
-        }
-
-        // Вспомогательный метод для поиска дочерних элементов
-        private T FindVisualChild<T>(DependencyObject parent, string childName) where T : DependencyObject
-        {
-            if (parent == null) return null;
-
-            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-
-                if (child is T && (child as FrameworkElement)?.Name == childName)
-                    return child as T;
-
-                var result = FindVisualChild<T>(child, childName);
-                if (result != null)
-                    return result;
-            }
-            return null;
+            LoadMedicinesFromDatabase();
         }
     }
 }
