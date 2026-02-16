@@ -8,6 +8,9 @@ using TheApothecary.Views;
 using TheApothecary.Data;
 using System.IO;
 using System.Windows.Media;
+using System.Windows.Threading;
+using System.ComponentModel;
+using System.Windows.Media.Animation;
 
 namespace TheApothecary
 {
@@ -16,8 +19,9 @@ namespace TheApothecary
         private List<Medicine> medicines;
         private List<CartItem> cartItems;
         private User currentUser;
+        private Dictionary<int, MedicineDisplay> medicineDisplayCache = new Dictionary<int, MedicineDisplay>();
 
-        public class MedicineDisplay
+        public class MedicineDisplay : INotifyPropertyChanged
         {
             public int Id { get; set; }
             public string Name { get; set; }
@@ -29,6 +33,34 @@ namespace TheApothecary
             public string RequiresPrescriptionColor { get; set; }
             public string Category { get; set; }
             public bool IsEmployee { get; set; }
+
+            private bool _isInCart;
+            public bool IsInCart
+            {
+                get { return _isInCart; }
+                set
+                {
+                    if (_isInCart != value)
+                    {
+                        _isInCart = value;
+                        OnPropertyChanged(nameof(IsInCart));
+                        OnPropertyChanged(nameof(CartButtonText));
+                        OnPropertyChanged(nameof(CartButtonColor));
+                        OnPropertyChanged(nameof(CartButtonBackground));
+                    }
+                }
+            }
+
+            public string CartButtonText => IsInCart ? "✓ В КОРЗИНЕ" : "В КОРЗИНУ";
+            public string CartButtonColor => IsInCart ? "#FFFFFF" : "#FFFFFF";
+            public string CartButtonBackground => IsInCart ? "#27AE60" : "#3498DB";
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
         public MainWindow()
@@ -71,8 +103,6 @@ namespace TheApothecary
                     StatusText.Text = $"Загружено лекарств: {medicines.Count}";
                 }
 
-                // ВСЕГДА показываем кнопки редактирования/удаления в XAML
-                // Управление видимостью будет через DataTrigger
                 bool isEmployee = currentUser != null &&
                                  (currentUser.Role == UserRole.Employee || currentUser.Role == UserRole.Admin);
 
@@ -87,8 +117,15 @@ namespace TheApothecary
                     RequiresPrescriptionText = med.RequiresPrescription ? "Требуется" : "Не требуется",
                     RequiresPrescriptionColor = med.RequiresPrescription ? "#E74C3C" : "#27AE60",
                     Category = med.Category,
-                    IsEmployee = isEmployee // Теперь правильно рассчитывается
+                    IsEmployee = isEmployee,
+                    IsInCart = cartItems.Any(item => item.Medicine.Id == med.Id)
                 }).ToList();
+
+                // Сохраняем в кэш
+                foreach (var med in displayMedicines)
+                {
+                    medicineDisplayCache[med.Id] = med;
+                }
 
                 MedicinesItemsControl.ItemsSource = displayMedicines;
             }
@@ -154,8 +191,94 @@ namespace TheApothecary
                 });
             }
 
+            // Обновляем визуальную индикацию
+            if (medicineDisplayCache.ContainsKey(medicineId))
+            {
+                medicineDisplayCache[medicineId].IsInCart = true;
+            }
+
             UpdateCartButton();
+
+            // Показываем анимацию добавления
+            ShowAddToCartAnimation(button);
+
             StatusText.Text = $"Добавлено: {medicine.Name}";
+        }
+
+        private void ShowAddToCartAnimation(Button button)
+        {
+            // Создаем всплывающее сообщение
+            var popup = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(220, 46, 204, 113)),
+                CornerRadius = new CornerRadius(15),
+                Padding = new Thickness(10, 5, 10, 5),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = "✓ Добавлено в корзину",
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 12
+                },
+                RenderTransform = new TranslateTransform(),
+                Opacity = 0
+            };
+
+            // Добавляем в тот же контейнер, что и кнопка
+            var parent = button.Parent as Grid;
+            if (parent != null)
+            {
+                parent.Children.Add(popup);
+                Grid.SetRow(popup, 2);
+                Grid.SetColumnSpan(popup, 1);
+            }
+
+            // Анимация
+            var fadeIn = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromSeconds(0.3)
+            };
+
+            var fadeOut = new DoubleAnimation
+            {
+                From = 1,
+                To = 0,
+                Duration = TimeSpan.FromSeconds(0.5),
+                BeginTime = TimeSpan.FromSeconds(1)
+            };
+
+            var translateUp = new DoubleAnimation
+            {
+                From = 0,
+                To = -20,
+                Duration = TimeSpan.FromSeconds(1.5)
+            };
+
+            Storyboard storyboard = new Storyboard();
+            storyboard.Children.Add(fadeIn);
+            storyboard.Children.Add(fadeOut);
+            storyboard.Children.Add(translateUp);
+
+            Storyboard.SetTarget(fadeIn, popup);
+            Storyboard.SetTarget(fadeOut, popup);
+            Storyboard.SetTarget(translateUp, popup);
+            Storyboard.SetTargetProperty(fadeIn, new PropertyPath(UIElement.OpacityProperty));
+            Storyboard.SetTargetProperty(fadeOut, new PropertyPath(UIElement.OpacityProperty));
+            Storyboard.SetTargetProperty(translateUp, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.Y)"));
+
+            storyboard.Completed += (s, args) =>
+            {
+                if (parent != null)
+                {
+                    parent.Children.Remove(popup);
+                }
+            };
+
+            storyboard.Begin();
         }
 
         private void UpdateCartButton()
@@ -177,6 +300,9 @@ namespace TheApothecary
             var cartWindow = new CartWindow(cartItems, currentUser);
             cartWindow.Owner = this;
             cartWindow.ShowDialog();
+
+            // После закрытия окна корзины обновляем индикацию
+            LoadMedicinesFromDatabase();
             UpdateCartButton();
         }
 
@@ -315,9 +441,10 @@ namespace TheApothecary
             {
                 currentUser = null;
                 cartItems.Clear();
+                medicineDisplayCache.Clear();
                 UpdateUserInterface();
                 UpdateCartButton();
-                LoadMedicinesFromDatabase(); // Обновляем список лекарств при выходе
+                LoadMedicinesFromDatabase();
                 StatusText.Text = "Вы вышли из системы";
             }
         }
@@ -560,7 +687,6 @@ namespace TheApothecary
             }
         }
 
-        // Метод для перезагрузки данных с обновленным IsEmployee
         public void RefreshMedicines()
         {
             LoadMedicinesFromDatabase();
